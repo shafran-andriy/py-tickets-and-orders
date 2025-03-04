@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
+from django.core.exceptions import ObjectDoesNotExist
 
 from db.models import User
 
@@ -8,7 +9,8 @@ def create_user(username: str, password: str,
                 email: str = None,
                 first_name: str = None,
                 last_name: str = None) -> User:
-    user = User.objects.create_user(username=username, password=password)
+    user = get_user_model().objects.create_user(
+        username=username, password=password)
     if email:
         user.email = email
     if first_name:
@@ -19,8 +21,11 @@ def create_user(username: str, password: str,
     return user
 
 
-def get_user(user_id: int) -> AbstractBaseUser:
-    return get_user_model().objects.get(id=user_id)
+def get_user(user_id: int) -> AbstractBaseUser | None:
+    try:
+        return get_user_model().objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        return None
 
 
 def update_user(user_id: int,
@@ -29,7 +34,7 @@ def update_user(user_id: int,
                 email: str = None,
                 first_name: str = None,
                 last_name: str = None) -> None:
-    user = get_user_model().objects.get(id=user_id)
+    user = get_user(user_id)
 
     if username is not None:
         user.username = username
